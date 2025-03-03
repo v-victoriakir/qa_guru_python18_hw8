@@ -83,7 +83,7 @@ class TestCart:
         # Input: 'Недостаточно товара'
         # не соображу - откуда тянется это несоответсвие результатов?
 
-    def test_remove_products(self, cart, product, product1):
+    def test_remove_some_products(self, cart, product, product1):
         cart.add_product(product, 555)
         cart.add_product(product1, 20)
         assert cart.products[product] == 555
@@ -91,6 +91,17 @@ class TestCart:
         cart.remove_product(product1, 15)
         assert cart.products[product] == 555
         assert cart.products[product1] == 5
+
+    def test_remove_all_products(self, cart, product):
+        cart.add_product(product, 555)
+        cart.remove_product(product, 555)
+        assert product not in cart.products
+
+    def test_remove_more_than_added(self, cart, product):
+        cart.add_product(product, 555)
+        with pytest.raises(ValueError):
+            cart.remove_product(product, 600)
+        #тоже ругается на ValueError
 
     def test_clear_cart(self, cart, product, product1):
         cart.add_product(product, 555)
