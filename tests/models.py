@@ -89,7 +89,8 @@ class Cart:
             raise ValueError("Попытка покупки пустой корзины")
 
         for product, quantity in self.products.items():
-            if not product.check_quantity(quantity):
-                raise ValueError(f"Товара {product.name} недостаточно на складе.")
-            else:
-                product.buy(quantity)
+            if product.quantity < quantity:
+                raise ValueError(f"Товара '{product.name}' недостаточно на складе!")
+
+        for product, quantity in self.products.items():
+            product.buy(quantity)

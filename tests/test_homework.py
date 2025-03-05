@@ -119,12 +119,8 @@ class TestCart:
     def test_total_price(self, cart, product, product1):
         cart.add_product(product, 555)
         cart.add_product(product1, 20)
-        assert cart.get_total_price() == (product.price * 555) + (product1.price * 20)
-        # можно ли эту проверку написать проще, чтобы не перечислять price и buy_count каждого продукта из корзины,
-        # и в то же время не вписывать вручную ожидаемое числовое значение?
-        # теоретически можно задать переменную expected_result и в нее поместить (product.price * 555) + (product1.price *20)
-        # но это все равно кажется неверным, вдруг товаров 100+ в лучшем случае?
-        # просится что-то вроде "возьми цены всех продуктов и умножай их на buy_count соответсвенно"
+        expected_result = (product.price * 555) + (product1.price * 20)
+        assert cart.get_total_price() == expected_result
 
     ## попытка купить пустую корзину
     def test_buy_empty_cart(self, cart):
@@ -144,12 +140,11 @@ class TestCart:
             cart.buy()
         assert product.quantity == 1000
 
-    ## попытка покупки корзины с более чем одним товаром, но только одного не хватает (при этом
-    ## тот товар, который полностью в наличии, покупается)
+    ## попытка покупки корзины с более чем одним товаром, но только одного не хватает (покупка не пройдет)
     def test_buy_cart_but_one_product_is_missing(self, cart, product, product1):
         cart.add_product(product, 999)
         cart.add_product(product1, 101)
         with pytest.raises(ValueError):
             cart.buy()
-        assert product.quantity == 1
+        assert product.quantity == 1000
         assert product1.quantity == 100
