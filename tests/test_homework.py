@@ -27,10 +27,14 @@ class TestProducts:
     Например, текущий класс группирует тесты на класс Product
     """
 
-    def test_product_check_quantity(self, product):
+    def test_product_check_quantity(self, product, product1):
         # TODO напишите проверки на метод check_quantity
-        assert product.check_quantity(321) is True
+        assert product.check_quantity(999) is True
+        assert product.check_quantity(1000) is True
         assert product.check_quantity(1001) is False
+        assert product1.check_quantity(99) is True
+        assert product1.check_quantity(100) is True
+        assert product1.check_quantity(101) is False
 
     def test_product_buy(self, product):
         # TODO напишите проверки на метод buy
@@ -52,14 +56,11 @@ class TestCart:
         Например, негативные тесты, ожидающие ошибку (используйте pytest.raises, чтобы проверить это)
     """
 
+    ## корзина пустая
     def test_check_cart_empty(self, cart):
         assert cart.products == {}
 
-    def test_buy_empty_cart(self, cart):
-        with pytest.raises(ValueError):
-            cart.buy()
-        # тест падает, но не пойму причину. выдает Failed: DID NOT RAISE <class 'ValueError'>
-
+    ## добавление товара
     def test_add_products(self, cart, product, product1):
         cart.add_product(product, 555)
         assert cart.products[product] == 555
@@ -67,23 +68,18 @@ class TestCart:
         cart.add_product(product1, 20)
         assert cart.products[product1] == 20
 
-    def test_cart_buy(self, cart, product, product1):
-        cart.add_product(product, 100)
-        cart.buy()
-        assert product.quantity == 900
+    ## повторное добавление "ещё товара" (уже был в корзине, добавляем)
+    def test_add_same_product_several_times(self, cart, product, product1):
+        cart.add_product(product, 555)
+        cart.add_product(product1, 20)
+        assert cart.products[product] == 555
+        assert cart.products[product1] == 20
+        cart.add_product(product1, 80)
+        assert cart.products[product] == 555
+        assert cart.products[product1] == 100
 
-    def test_buy_products_more_than_available(self, cart, product):
-        cart.add_product(product, 1001)
-        with pytest.raises(ValueError, match=f'Товара {product.name} недостаточно на складе.'):
-            cart.buy()
-        # если прописать тест без match =, то он проходит
-        # но с указанием текста для вывода идет ошибка
-        # AssertionError: Regex pattern did not match.
-        # Regex: 'Товара book недостаточно на складе'
-        # Input: 'Недостаточно товара'
-        # не соображу - откуда тянется это несоответсвие результатов?
-
-    def test_remove_some_products(self, cart, product, product1):
+    ## удаление части добавленного товара
+    def test_remove_products_partial(self, cart, product, product1):
         cart.add_product(product, 555)
         cart.add_product(product1, 20)
         assert cart.products[product] == 555
@@ -92,17 +88,25 @@ class TestCart:
         assert cart.products[product] == 555
         assert cart.products[product1] == 5
 
-    def test_remove_all_products(self, cart, product):
+    ## удаление добавленного товара
+    def test_remove_the_added_product(self, cart, product):
         cart.add_product(product, 555)
         cart.remove_product(product, 555)
         assert product not in cart.products
 
+    ## попытка удалить больше товара, чем есть в корзине
     def test_remove_more_than_added(self, cart, product):
         cart.add_product(product, 555)
-        with pytest.raises(ValueError):
-            cart.remove_product(product, 600)
-        #тоже ругается на ValueError
+        cart.remove_product(product, 600)
+        assert product not in cart.products
 
+    ## удаление товара без указания кол-ва
+    def test_remove_the_added_product_quantity_not_specified(self, cart, product):
+        cart.add_product(product, 555)
+        cart.remove_product(product)
+        assert product not in cart.products
+
+    ## полное очищение корзины через clear
     def test_clear_cart(self, cart, product, product1):
         cart.add_product(product, 555)
         cart.add_product(product1, 20)
@@ -111,6 +115,7 @@ class TestCart:
         cart.clear()
         assert len(cart.products) == 0
 
+    ## подсчет стоимости корзины
     def test_total_price(self, cart, product, product1):
         cart.add_product(product, 555)
         cart.add_product(product1, 20)
@@ -120,3 +125,31 @@ class TestCart:
         # теоретически можно задать переменную expected_result и в нее поместить (product.price * 555) + (product1.price *20)
         # но это все равно кажется неверным, вдруг товаров 100+ в лучшем случае?
         # просится что-то вроде "возьми цены всех продуктов и умножай их на buy_count соответсвенно"
+
+    ## попытка купить пустую корзину
+    def test_buy_empty_cart(self, cart):
+        with pytest.raises(ValueError):
+            cart.buy()
+
+    ## покупка добавленного товара
+    def test_cart_buy(self, cart, product, product1):
+        cart.add_product(product, 100)
+        cart.buy()
+        assert product.quantity == 900
+
+    ## попытка покупки товаров больше, чем доступно
+    def test_buy_products_more_than_available(self, cart, product):
+        cart.add_product(product, 1001)
+        with pytest.raises(ValueError):
+            cart.buy()
+        assert product.quantity == 1000
+
+    ## попытка покупки корзины с более чем одним товаром, но только одного не хватает (при этом
+    ## тот товар, который полностью в наличии, покупается)
+    def test_buy_cart_but_one_product_is_missing(self, cart, product, product1):
+        cart.add_product(product, 999)
+        cart.add_product(product1, 101)
+        with pytest.raises(ValueError):
+            cart.buy()
+        assert product.quantity == 1
+        assert product1.quantity == 100
