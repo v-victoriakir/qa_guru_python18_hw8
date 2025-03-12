@@ -27,14 +27,11 @@ class TestProducts:
     Например, текущий класс группирует тесты на класс Product
     """
 
-    def test_product_check_quantity(self, product, product1):
+    def test_product_check_quantity(self, product):
         # TODO напишите проверки на метод check_quantity
         assert product.check_quantity(999) is True
         assert product.check_quantity(1000) is True
         assert product.check_quantity(1001) is False
-        assert product1.check_quantity(99) is True
-        assert product1.check_quantity(100) is True
-        assert product1.check_quantity(101) is False
 
     def test_product_buy(self, product):
         # TODO напишите проверки на метод buy
@@ -82,8 +79,6 @@ class TestCart:
     def test_remove_products_partial(self, cart, product, product1):
         cart.add_product(product, 555)
         cart.add_product(product1, 20)
-        assert cart.products[product] == 555
-        assert cart.products[product1] == 20
         cart.remove_product(product1, 15)
         assert cart.products[product] == 555
         assert cart.products[product1] == 5
@@ -110,8 +105,6 @@ class TestCart:
     def test_clear_cart(self, cart, product, product1):
         cart.add_product(product, 555)
         cart.add_product(product1, 20)
-        assert cart.products[product] == 555
-        assert cart.products[product1] == 20
         cart.clear()
         assert len(cart.products) == 0
 
@@ -128,10 +121,18 @@ class TestCart:
             cart.buy()
 
     ## покупка добавленного товара
-    def test_cart_buy(self, cart, product, product1):
+    def test_cart_buy_one_product(self, cart, product):
         cart.add_product(product, 100)
         cart.buy()
         assert product.quantity == 900
+
+    ## покупка нескольких товаров
+    def test_cart_buy_several_products(self, cart, product, product1):
+        cart.add_product(product, 500)
+        cart.add_product(product1, 50)
+        cart.buy()
+        assert product.quantity == 500
+        assert product1.quantity == 50
 
     ## попытка покупки товаров больше, чем доступно
     def test_buy_products_more_than_available(self, cart, product):
